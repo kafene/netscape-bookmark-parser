@@ -1,4 +1,7 @@
 <?php
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
  * Basically netscape bookmark files often come so badly formed, there's
@@ -13,16 +16,13 @@
  * @todo - running Tidy before doing this might be beneficial.
  *   ?? $bkmk_str = tidy_parse_string($bkmk_str)->cleanRepair();
  *
+ * Example:
+ *     var_dump(parse_netscape_bookmarks(file_get_contents('bookmarks_export.htm')));
+ * 
  * Update 2013-07-08:
  *     Just tested this on an export of some bookmarks from Pinboard.in
  *     and it seems that it is still working, so good for me.
  */
-
-/*
-print '<PRE>';
-var_dump(parse_netscape_bookmarks(file_get_contents('bookmarks_export.htm')));
-*/
-
 function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
     $i = 0;
     $next = false;
