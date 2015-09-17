@@ -3,6 +3,6 @@
     "description": "Parse Netscape format bookmark files",
     "keywords": ["parse", "bookmark", "netscape"],
     "homepage": "https://github.com/kafene/BookmarkParser",
-    "license": "MPL-2.0",
+    "license": "MIT",
     "autoload": {"files": ["parse_netscape_bookmarks.php"]}
 }
