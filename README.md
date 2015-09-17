@@ -13,11 +13,13 @@ DOM parsing library just to do this one thing, so this is it.
 # Changes
 
 **2015-09-17**:
+
 - Added a LICENSE file, using [MPL-2.0](https://tldrlegal.com/license/mozilla-public-license-2.0-%28mpl-2%29)
 - Added a `composer.json` file and added to packagist
 - Tag release v0.0.1
 
 **2013-07-08**:
+
 Just tested this on an export of some bookmarks from Pinboard.in
 and it seems that it is still working, so good for me.
 
