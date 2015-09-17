@@ -16,7 +16,7 @@ DOM parsing library just to do this one thing, so this is it.
 
 - Added a LICENSE file
 - Added a `composer.json` file and added to packagist
-- Tag release v0.0.1
+- Tag release v0.0.2
 
 **2013-07-08**:
 
