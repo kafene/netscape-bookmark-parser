@@ -3,14 +3,14 @@
 function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
     $i = 0;
     $next = false;
-    $items = [];
+    $items = array();
 
     $current_tag = $default_tag = $default_tag ?: 'imported-'.date("Ymd");
 
-    $bkmk_str = str_replace(["\r","\n","\t"], ['','',' '], $bkmk_str);
+    $bkmk_str = str_replace(array("\r","\n","\t"), array('','',' '), $bkmk_str);
 
     $bkmk_str = preg_replace_callback('@<dd>(.*?)(<A|<\/|<DL|<DT|<P)@mis', function($m) {
-        return '<dd>'.str_replace(["\r", "\n"], ['', '<br>'], trim($m[1])).'</';
+        return '<dd>'.str_replace(array("\r", "\n"), array('', '<br>'), trim($m[1])).'</';
     }, $bkmk_str);
 
     $bkmk_str = preg_replace('/>(\s*?)</mis', ">\n<", $bkmk_str);
