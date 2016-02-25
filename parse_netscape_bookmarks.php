@@ -86,7 +86,7 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
             }
 
             if (preg_match('/add_date="(.*?)"/i', $line, $m8)) {
-                 $items[$i]['time'] = strtotime($m8[0]) ?: time();
+                $items[$i]['time'] = parse_bookmark_date($m8[1]);
             } else {
                 $items[$i]['time'] = time();
             }
@@ -103,4 +103,29 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
     ksort($items);
 
     return $items;
+}
+
+
+/**
+ * Parses a formatted date
+ *
+ * @see http://php.net/manual/en/datetime.formats.compound.php
+ * @see http://php.net/manual/en/function.strtotime.php
+ *
+ * @param string $date formatted date
+ *
+ * @return int Unix timestamp corresponding to a successfully parsed date,
+ *             else current date and time
+ */
+function parse_bookmark_date($date)
+{
+    if (strtotime('@'.$date)) {
+        # Unix timestamp
+        return strtotime('@'.$date);
+    } else if (strtotime($date)) {
+        # attempt to parse a known compound date/time format
+        return strtotime($date);
+    }
+    # current date & time
+    return time();
 }
