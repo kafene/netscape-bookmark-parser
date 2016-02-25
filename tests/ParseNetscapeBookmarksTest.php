@@ -71,4 +71,91 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
             parse_bookmark_date('-371211336')
         );
     }
+
+    /**
+     * Use a default tag if none is found
+     */
+    public function test_add_default_tag()
+    {
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://no.tag">NoTag</A>'
+        );
+        $this->assertEquals(
+            'imported-'.date('Ymd'),
+            $bkm[0]['tags']
+        );
+    }
+
+    /**
+     * Use a user-defined default tag if none is found
+     */
+    public function test_add_user_default_tag()
+    {
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://no.tag">NoTag</A>',
+            'im port ed'
+        );
+        $this->assertEquals(
+            'im port ed',
+            $bkm[0]['tags']
+        );
+    }
+
+    /**
+     * Keep empty tags
+     */
+    public function test_parse_empty_tags()
+    {
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://empty.tag" TAGS="">EmptyTag</A>'
+        );
+        $this->assertEquals(
+            '',
+            $bkm[0]['tags']
+        );
+    }
+
+    /**
+     * Parse space-separated tags
+     */
+    public function test_parse_space_tags()
+    {
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://space.tag" TAGS="t1 t2">SpaceTag</A>'
+        );
+        $this->assertEquals(
+            't1 t2',
+            $bkm[0]['tags']
+        );
+
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://space.tag" TAGS="t_1 .t_2">SpaceTag</A>'
+        );
+        $this->assertEquals(
+            't_1 .t_2',
+            $bkm[0]['tags']
+        );
+    }
+
+    /**
+     * Parse comma-separated tags
+     */
+    public function test_parse_comma_tags()
+    {
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://comma.tag" TAGS="t1,t2,t3">CommaTag</A>'
+        );
+        $this->assertEquals(
+            't1 t2 t3',
+            $bkm[0]['tags']
+        );
+
+        $bkm = parse_netscape_bookmarks(
+            '<A HREF="http://comma.tag" TAGS="t1,.t2,.t_3">CommaTag</A>'
+        );
+        $this->assertEquals(
+            't1 .t2 .t_3',
+            $bkm[0]['tags']
+        );
+    }
 }
