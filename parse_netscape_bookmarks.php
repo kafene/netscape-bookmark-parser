@@ -7,7 +7,7 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
 
     $current_tag = $default_tag = $default_tag ?: 'imported-'.date("Ymd");
 
-    $bkmk_str = str_replace(array("\r","\n","\t"), array('','',' '), $bkmk_str);
+    $bkmk_str = str_replace(array("\r", "\t"), array('',' '), $bkmk_str);
 
     $bkmk_str = preg_replace_callback('@<dd>(.*?)(<A|<\/|<DL|<DT|<P)@mis', function($m) {
         return '<dd>'.str_replace(array("\r", "\n"), array('', '<br>'), trim($m[1])).'</';
