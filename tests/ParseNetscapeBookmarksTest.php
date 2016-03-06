@@ -35,6 +35,27 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Parse a Netscape file containing multiline descriptions
+     */
+    public function test_parse_multiline_descriptions()
+    {
+        $bkm = parse_netscape_bookmarks(
+            file_get_contents('tests/input/netscape_multiline.htm')
+        );
+        $this->assertEquals(2, sizeof($bkm));
+        $this->assertEquals(
+            'List:'.PHP_EOL.'- item1'.PHP_EOL.'- item2'.PHP_EOL.'- item3',
+            $bkm[0]['note']
+        );
+        $this->assertEquals(
+            'Nested lists:'
+           .PHP_EOL.'- list1'.PHP_EOL.'  - item1.1'.PHP_EOL.'  - item1.2'.PHP_EOL.'  - item1.3'
+           .PHP_EOL.'- list2'.PHP_EOL.'  - item2.1',
+            $bkm[1]['note']
+        );
+    }
+
+    /**
      * Parse log dates
      */
     public function test_parse_log_dates()
