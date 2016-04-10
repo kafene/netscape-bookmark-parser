@@ -10,7 +10,7 @@ class ParseDeliciousBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse bookmarks as exported by Delicious
      */
-    public function test_parse()
+    public function testParse()
     {
         $bkm = parse_netscape_bookmarks(
             file_get_contents('tests/input/delicious.htm')

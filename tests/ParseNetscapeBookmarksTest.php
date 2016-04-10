@@ -11,7 +11,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse a basic Netscape file
      */
-    public function test_parse_basic()
+    public function testParseBasic()
     {
         $bkm = parse_netscape_bookmarks(
             file_get_contents('tests/input/netscape_basic.htm')
@@ -37,7 +37,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse a Netscape file containing multiline descriptions
      */
-    public function test_parse_multiline_descriptions()
+    public function testParseMultilineDescriptions()
     {
         $bkm = parse_netscape_bookmarks(
             file_get_contents('tests/input/netscape_multiline.htm')
@@ -58,7 +58,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse log dates
      */
-    public function test_parse_log_dates()
+    public function testParseLogDates()
     {
         $this->assertEquals(
             '971211336',
@@ -77,7 +77,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse Unix timestamps
      */
-    public function test_parse_unix_dates()
+    public function testParseUnixDates()
     {
         $this->assertEquals(
             '1456433748',
@@ -96,7 +96,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Use a default tag if none is found
      */
-    public function test_add_default_tag()
+    public function testAddDefaultTag()
     {
         $bkm = parse_netscape_bookmarks(
             '<A HREF="http://no.tag">NoTag</A>'
@@ -110,7 +110,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Use a user-defined default tag if none is found
      */
-    public function test_add_user_default_tag()
+    public function testAddUserDefaultTag()
     {
         $bkm = parse_netscape_bookmarks(
             '<A HREF="http://no.tag">NoTag</A>',
@@ -125,7 +125,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Keep empty tags
      */
-    public function test_parse_empty_tags()
+    public function testParseEmptyTags()
     {
         $bkm = parse_netscape_bookmarks(
             '<A HREF="http://empty.tag" TAGS="">EmptyTag</A>'
@@ -139,7 +139,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse space-separated tags
      */
-    public function test_parse_space_tags()
+    public function testParseSpaceTags()
     {
         $bkm = parse_netscape_bookmarks(
             '<A HREF="http://space.tag" TAGS="t1 t2">SpaceTag</A>'
@@ -161,7 +161,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     /**
      * Parse comma-separated tags
      */
-    public function test_parse_comma_tags()
+    public function testParseCommaTags()
     {
         $bkm = parse_netscape_bookmarks(
             '<A HREF="http://comma.tag" TAGS="t1,t2,t3">CommaTag</A>'
