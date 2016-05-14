@@ -1,5 +1,32 @@
 <?php
 
+/**
+ * Parses a string containing Netscape-formatted bookmarks
+ *
+ * Output format:
+ *
+ *     Array
+ *     (
+ *         [0] => Array
+ *             (
+ *                 [note]  => Some comments about this link
+ *                 [pub]   => 1
+ *                 [tags]  => a list of tags
+ *                 [time]  => 1459371397
+ *                 [title] => Some page
+ *                 [uri]   => http://domain.tld:5678/some-page.html
+ *             )
+ *         [1] => Array
+ *             (
+ *                 ...
+ *             )
+ *     )
+ *
+ * @param string $bkmk_str    String containing Netscape bookmarks
+ * @param string $default_tag Default link tag
+ *
+ * @return array An associative array containing parsed links
+ */
 function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
     $i = 0;
     $next = false;
@@ -7,19 +34,7 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
 
     $current_tag = $default_tag = $default_tag ?: 'imported-'.date("Ymd");
 
-    $bkmk_str = str_replace(array("\r", "\t"), array('',' '), $bkmk_str);
-
-    $bkmk_str = preg_replace_callback('@<dd>(.*?)(<A|<\/|<DL|<DT|<P)@mis', function($m) {
-        return '<dd>'.str_replace(array("\r", "\n"), array('', '<br>'), trim($m[1])).'</';
-    }, $bkmk_str);
-
-    $bkmk_str = preg_replace('/>(\s*?)</mis', ">\n<", $bkmk_str);
-    $bkmk_str = preg_replace('/(<!DOCTYPE|<META|<!--|<TITLE|<H1|<P)(.*?)\n/i', '', $bkmk_str);
-
-    $bkmk_str = trim($bkmk_str);
-    $bkmk_str = preg_replace('/\n<dd/i', '<dd', $bkmk_str);
-
-    $lines = explode("\n", $bkmk_str);
+    $lines = explode("\n", sanitize_bookmark_string($bkmk_str));
 
     $str_bool = function($str, $default = false) {
         if (!$str) {
@@ -120,12 +135,44 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
 function parse_bookmark_date($date)
 {
     if (strtotime('@'.$date)) {
-        # Unix timestamp
+        // Unix timestamp
         return strtotime('@'.$date);
     } else if (strtotime($date)) {
-        # attempt to parse a known compound date/time format
+        // attempt to parse a known compound date/time format
         return strtotime($date);
     }
-    # current date & time
+    // current date & time
     return time();
+}
+
+
+/**
+ * Sanitizes the content of a string containing Netscape bookmarks
+ *
+ * This removes extra newlines, trailing spaces and tabs.
+ *
+ * @param string $str Original bookmark string
+ *
+ * @return string Sanitized bookmark string
+ */
+function sanitize_bookmark_string($str)
+{
+    $sanitized = $str;
+    $sanitized = str_replace(array("\r", "\t"), array('',' '), $sanitized);
+
+    $sanitized = preg_replace_callback(
+        '@<DD>(.*?)(<A|<\/|<DL|<DT|<P)@mis',
+        function($match) {
+            return '<DD>'.str_replace("\n", '<br>', trim($match[1])).'</';
+        },
+        $sanitized
+    );
+
+    $sanitized = preg_replace('@>(\s*?)<@mis', ">\n<", $sanitized);
+    $sanitized = preg_replace('@<br>\n<br>@mis', "<br><br>", $sanitized);
+    $sanitized = preg_replace('@(<!DOCTYPE|<META|<!--|<TITLE|<H1|<P)(.*?)\n@i', '', $sanitized);
+    $sanitized = trim($sanitized);
+    $sanitized = preg_replace('@\n<dd@i', '<dd', $sanitized);
+
+    return $sanitized;
 }
