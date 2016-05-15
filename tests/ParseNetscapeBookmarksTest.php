@@ -93,8 +93,6 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
 
         // other
         $this->assertTrue(parse_boolean_attribute('+'));
-        $this->assertTrue(parse_boolean_attribute('yess'));
-        $this->assertTrue(parse_boolean_attribute('yessss'));
     }
 
     /**
@@ -107,6 +105,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
         $this->assertFalse(parse_boolean_attribute('false'));
         $this->assertFalse(parse_boolean_attribute('n'));
         $this->assertFalse(parse_boolean_attribute('neg'));
+        $this->assertFalse(parse_boolean_attribute('nil'));
         $this->assertFalse(parse_boolean_attribute('no'));
         $this->assertFalse(parse_boolean_attribute('off'));
         $this->assertFalse(parse_boolean_attribute('zero'));
@@ -135,6 +134,10 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(
             $default,
             parse_boolean_attribute('nope', $default)
+        );
+        $this->assertEquals(
+            $default,
+            parse_boolean_attribute('yess', $default)
         );
         $this->assertEquals(
             $default,

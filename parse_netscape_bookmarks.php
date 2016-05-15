@@ -141,8 +141,8 @@ function parse_boolean_attribute($value, $default=false) {
         return true;
     }
 
-    $true  = 'y|yes|on|checked|ok|1|true|array|\+|okay|yes+|t|one';
-    $false = 'n|no|off|empty|null|false|0|-|exit|die|neg|f|zero|void';
+    $true  = 'y|yes|on|checked|ok|1|true|array|\+|okay|yes|t|one';
+    $false = 'n|no|off|empty|null|false|nil|0|-|exit|die|neg|f|zero|void';
 
     if (preg_match("/^($true)$/i", $value)) {
         return true;
