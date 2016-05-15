@@ -68,6 +68,89 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Parse boolean attribute values - evaluating to TRUE
+     */
+    function testParseBooleanAttributesTrue()
+    {
+        // standard booleans
+        $this->assertTrue(parse_boolean_attribute('on'));
+        $this->assertTrue(parse_boolean_attribute('t'));
+        $this->assertTrue(parse_boolean_attribute('true'));
+        $this->assertTrue(parse_boolean_attribute('y'));
+        $this->assertTrue(parse_boolean_attribute('yes'));
+        $this->assertTrue(parse_boolean_attribute('1'));
+        $this->assertTrue(parse_boolean_attribute('one'));
+
+        // HTML forms
+        $this->assertTrue(parse_boolean_attribute('checked'));
+        $this->assertTrue(parse_boolean_attribute('ok'));
+        $this->assertTrue(parse_boolean_attribute('okay'));
+
+        // integers != [0, 1]
+        $this->assertTrue(parse_boolean_attribute(2));
+        $this->assertTrue(parse_boolean_attribute(5));
+        $this->assertTrue(parse_boolean_attribute(-30));
+
+        // other
+        $this->assertTrue(parse_boolean_attribute('+'));
+        $this->assertTrue(parse_boolean_attribute('yess'));
+        $this->assertTrue(parse_boolean_attribute('yessss'));
+    }
+
+    /**
+     * Parse boolean attribute values - evaluating to FALSE
+     */
+    function testParseBooleanAttributesFalse()
+    {
+        // standard booleans
+        $this->assertFalse(parse_boolean_attribute('f'));
+        $this->assertFalse(parse_boolean_attribute('false'));
+        $this->assertFalse(parse_boolean_attribute('n'));
+        $this->assertFalse(parse_boolean_attribute('neg'));
+        $this->assertFalse(parse_boolean_attribute('no'));
+        $this->assertFalse(parse_boolean_attribute('off'));
+        $this->assertFalse(parse_boolean_attribute('zero'));
+        $this->assertFalse(parse_boolean_attribute('0'));
+
+        // empty values
+        $this->assertFalse(parse_boolean_attribute('empty'));
+        $this->assertFalse(parse_boolean_attribute('null'));
+        $this->assertFalse(parse_boolean_attribute('void'));
+
+        // errors
+        $this->assertFalse(parse_boolean_attribute('exit'));
+        $this->assertFalse(parse_boolean_attribute('die'));
+
+        // other
+        $this->assertFalse(parse_boolean_attribute('-'));
+    }
+
+    /**
+     * Parse boolean attribute values - fail and return the default value
+     */
+    function testParseBooleanAttributesDefault()
+    {
+        $default = 'def';
+
+        $this->assertEquals(
+            $default,
+            parse_boolean_attribute('nope', $default)
+        );
+        $this->assertEquals(
+            $default,
+            parse_boolean_attribute('yup', $default)
+        );
+        $this->assertEquals(
+            $default,
+            parse_boolean_attribute('+++', $default)
+        );
+        $this->assertEquals(
+            $default,
+            parse_boolean_attribute('--', $default)
+        );
+    }
+
+    /**
      * Parse log dates
      */
     public function testParseLogDates()

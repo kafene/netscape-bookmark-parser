@@ -27,7 +27,7 @@
  *
  * @return array An associative array containing parsed links
  */
-function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
+function parse_netscape_bookmarks($bkmk_str, $default_tag=null) {
     $i = 0;
     $next = false;
     $items = array();
@@ -36,32 +36,14 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
 
     $lines = explode("\n", sanitize_bookmark_string($bkmk_str));
 
-    $str_bool = function($str, $default = false) {
-        if (!$str) {
-            return false;
-        } elseif (!is_string($str) && $str) {
-            return true;
-        }
-
-        $true  = 'y|yes|on|checked|ok|1|true|array|\+|okay|yes+|t|one';
-        $false = 'n|no|off|empty|null|false|0|-|exit|die|neg|f|zero|void';
-
-        if (preg_match("/^($true)$/i", $str)) {
-            return true;
-        } elseif (preg_match("/^($false)$/i", $str)) {
-            return false;
-        }
-
-        return $default;
-    };
-
     foreach ($lines as $line_no => $line) {
-        /* If we match a tag, set current tag to that, if <DL>, stop tag. */
         if (preg_match('/^<h\d(.*?)>(.*?)<\/h\d>/i', $line, $m1)) {
+            // a tag is matched: set its value as current
             $current_tag = $m1[2];
-
             continue;
+
         } elseif (preg_match('/^<\/DL>/i', $line)) {
+            // <DL> matched: stop using tag
             $current_tag = $default_tag;
         }
 
@@ -72,18 +54,14 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
 
             if (preg_match('/href="(.*?)"/i', $line, $m3)) {
                 $items[$i]['uri'] = $m3[1];
-                // $items[$i]['meta'] = meta($m3[1]);
             } else {
                 $items[$i]['uri'] = '';
-                // $items[$i]['meta'] = '';
             }
 
             if (preg_match('/<a(.*?)>(.*?)<\/a>/i', $line, $m4)) {
                 $items[$i]['title'] = $m4[2];
-                // $items[$i]['slug'] = slugify($m4[2]);
             } else {
                 $items[$i]['title'] = 'untitled';
-                // $items[$i]['slug'] = '';
             }
 
             if (preg_match('/note="(.*?)"<\/a>/i', $line, $m5)) {
@@ -107,16 +85,15 @@ function parse_netscape_bookmarks($bkmk_str, $default_tag = null) {
             }
 
             if (preg_match('/(public|published|pub)="(.*?)"/i', $line, $m9)) {
-                $items[$i]['pub'] = $str_bool($m9[2], false) ? 1 : 0;
+                $items[$i]['pub'] = parse_boolean_attribute($m9[2], false) ? 1 : 0;
             } elseif (preg_match('/(private|shared)="(.*?)"/i', $line, $m10)) {
-                $items[$i]['pub'] = $str_bool($m10[2], true) ? 0 : 1;
+                $items[$i]['pub'] = parse_boolean_attribute($m10[2], true) ? 0 : 1;
             }
 
             $i++;
         }
     }
     ksort($items);
-
     return $items;
 }
 
@@ -145,6 +122,36 @@ function parse_bookmark_date($date)
     return time();
 }
 
+
+/**
+ * Parses the value of a supposedly boolean attribute
+ *
+ * @param string $value   Attribute value to evaluate
+ * @param string $default Value to return if the attribute is not a boolean
+ *
+ * @return bool 'true' when the value is evaluated as true
+ *              'false' when the value is evaluated as false
+ *              $default if the value is not a boolean
+ */
+function parse_boolean_attribute($value, $default=false) {
+    if (! $value) {
+        return false;
+    }
+    if (! is_string($value)) {
+        return true;
+    }
+
+    $true  = 'y|yes|on|checked|ok|1|true|array|\+|okay|yes+|t|one';
+    $false = 'n|no|off|empty|null|false|0|-|exit|die|neg|f|zero|void';
+
+    if (preg_match("/^($true)$/i", $value)) {
+        return true;
+    }
+    if (preg_match("/^($false)$/i", $value)) {
+        return false;
+    }
+    return $default;
+};
 
 /**
  * Sanitizes the content of a string containing Netscape bookmarks
