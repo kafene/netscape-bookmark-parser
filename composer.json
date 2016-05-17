@@ -1,11 +1,27 @@
 {
     "name": "kafene/netscape-bookmark-parser",
     "description": "Generic Netscape bookmark parser",
-    "keywords": ["parse", "bookmark", "netscape"],
-    "homepage": "https://github.com/kafene/BookmarkParser",
     "license": "MIT",
+    "homepage": "https://github.com/kafene/netscape-bookmark-parser",
+    "authors": [
+        {
+            "name": "Kafene",
+            "email": "io@kafene.org",
+            "homepage": "https://github.com/kafene",
+            "role": "Developer"
+        },
+        {
+            "name": "VirtualTam",
+            "email": "virtualtam@flibidi.net",
+            "homepage": "https://github.com/virtualtam",
+            "role": "Developer"
+        }
+    ],
+    "keywords": ["bookmark", "link", "netscape", "parse"],
     "autoload": {"files": ["NetscapeBookmarkParser.php"]},
-    "require": {},
+    "require": {
+        "php": ">=5.3.4"
+    },
     "require-dev": {
         "phpunit/phpunit": "4.6.*"
     }
