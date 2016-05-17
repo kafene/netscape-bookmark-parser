@@ -8,14 +8,23 @@
  */
 class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
 {
+    protected $parser = null;
+
+    /**
+     * Initialize test resources
+     */
+    public function setUp()
+    {
+        $this->parser = new NetscapeBookmarkParser(null, 'error');
+    }
+
     /**
      * Parse a basic Netscape file
      */
     public function testParseBasic()
     {
-        $bkm = parse_netscape_bookmarks(
-            file_get_contents('tests/input/netscape_basic.htm')
-        );
+        $bkm = $this->parser->parseFile('tests/input/netscape_basic.htm');
+
         $this->assertEquals(2, sizeof($bkm));
 
         $this->assertEquals('Secret stuff', $bkm[0]['title']);
@@ -39,9 +48,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParseMultilineDescriptions()
     {
-        $bkm = parse_netscape_bookmarks(
-            file_get_contents('tests/input/netscape_multiline.htm')
-        );
+        $bkm = $this->parser->parseFile('tests/input/netscape_multiline.htm');
         $this->assertEquals(3, sizeof($bkm));
 
         // simple list
@@ -73,26 +80,26 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     function testParseBooleanAttributesTrue()
     {
         // standard booleans
-        $this->assertTrue(parse_boolean_attribute('on'));
-        $this->assertTrue(parse_boolean_attribute('t'));
-        $this->assertTrue(parse_boolean_attribute('true'));
-        $this->assertTrue(parse_boolean_attribute('y'));
-        $this->assertTrue(parse_boolean_attribute('yes'));
-        $this->assertTrue(parse_boolean_attribute('1'));
-        $this->assertTrue(parse_boolean_attribute('one'));
+        $this->assertTrue($this->parser->parseBoolean('on'));
+        $this->assertTrue($this->parser->parseBoolean('t'));
+        $this->assertTrue($this->parser->parseBoolean('true'));
+        $this->assertTrue($this->parser->parseBoolean('y'));
+        $this->assertTrue($this->parser->parseBoolean('yes'));
+        $this->assertTrue($this->parser->parseBoolean('1'));
+        $this->assertTrue($this->parser->parseBoolean('one'));
 
         // HTML forms
-        $this->assertTrue(parse_boolean_attribute('checked'));
-        $this->assertTrue(parse_boolean_attribute('ok'));
-        $this->assertTrue(parse_boolean_attribute('okay'));
+        $this->assertTrue($this->parser->parseBoolean('checked'));
+        $this->assertTrue($this->parser->parseBoolean('ok'));
+        $this->assertTrue($this->parser->parseBoolean('okay'));
 
         // integers != [0, 1]
-        $this->assertTrue(parse_boolean_attribute(2));
-        $this->assertTrue(parse_boolean_attribute(5));
-        $this->assertTrue(parse_boolean_attribute(-30));
+        $this->assertTrue($this->parser->parseBoolean(2));
+        $this->assertTrue($this->parser->parseBoolean(5));
+        $this->assertTrue($this->parser->parseBoolean(-30));
 
         // other
-        $this->assertTrue(parse_boolean_attribute('+'));
+        $this->assertTrue($this->parser->parseBoolean('+'));
     }
 
     /**
@@ -101,27 +108,27 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     function testParseBooleanAttributesFalse()
     {
         // standard booleans
-        $this->assertFalse(parse_boolean_attribute('f'));
-        $this->assertFalse(parse_boolean_attribute('false'));
-        $this->assertFalse(parse_boolean_attribute('n'));
-        $this->assertFalse(parse_boolean_attribute('neg'));
-        $this->assertFalse(parse_boolean_attribute('nil'));
-        $this->assertFalse(parse_boolean_attribute('no'));
-        $this->assertFalse(parse_boolean_attribute('off'));
-        $this->assertFalse(parse_boolean_attribute('zero'));
-        $this->assertFalse(parse_boolean_attribute('0'));
+        $this->assertFalse($this->parser->parseBoolean('f'));
+        $this->assertFalse($this->parser->parseBoolean('false'));
+        $this->assertFalse($this->parser->parseBoolean('n'));
+        $this->assertFalse($this->parser->parseBoolean('neg'));
+        $this->assertFalse($this->parser->parseBoolean('nil'));
+        $this->assertFalse($this->parser->parseBoolean('no'));
+        $this->assertFalse($this->parser->parseBoolean('off'));
+        $this->assertFalse($this->parser->parseBoolean('zero'));
+        $this->assertFalse($this->parser->parseBoolean('0'));
 
         // empty values
-        $this->assertFalse(parse_boolean_attribute('empty'));
-        $this->assertFalse(parse_boolean_attribute('null'));
-        $this->assertFalse(parse_boolean_attribute('void'));
+        $this->assertFalse($this->parser->parseBoolean('empty'));
+        $this->assertFalse($this->parser->parseBoolean('null'));
+        $this->assertFalse($this->parser->parseBoolean('void'));
 
         // errors
-        $this->assertFalse(parse_boolean_attribute('exit'));
-        $this->assertFalse(parse_boolean_attribute('die'));
+        $this->assertFalse($this->parser->parseBoolean('exit'));
+        $this->assertFalse($this->parser->parseBoolean('die'));
 
         // other
-        $this->assertFalse(parse_boolean_attribute('-'));
+        $this->assertFalse($this->parser->parseBoolean('-'));
     }
 
     /**
@@ -130,26 +137,27 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     function testParseBooleanAttributesDefault()
     {
         $default = 'def';
+        $parser = new NetscapeBookmarkParser(null, $default);
 
         $this->assertEquals(
             $default,
-            parse_boolean_attribute('nope', $default)
+            $parser->parseBoolean('nope', $default)
         );
         $this->assertEquals(
             $default,
-            parse_boolean_attribute('yess', $default)
+            $parser->parseBoolean('yess', $default)
         );
         $this->assertEquals(
             $default,
-            parse_boolean_attribute('yup', $default)
+            $parser->parseBoolean('yup', $default)
         );
         $this->assertEquals(
             $default,
-            parse_boolean_attribute('+++', $default)
+            $parser->parseBoolean('+++', $default)
         );
         $this->assertEquals(
             $default,
-            parse_boolean_attribute('--', $default)
+            $parser->parseBoolean('--', $default)
         );
     }
 
@@ -160,15 +168,15 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             '971211336',
-            parse_bookmark_date('10/Oct/2000:13:55:36 -0700')
+            $this->parser->parseDate('10/Oct/2000:13:55:36 -0700')
         );
         $this->assertEquals(
             '971186136',
-            parse_bookmark_date('10/Oct/2000:13:55:36 +0000')
+            $this->parser->parseDate('10/Oct/2000:13:55:36 +0000')
         );
         $this->assertEquals(
             '971175336',
-            parse_bookmark_date('10/Oct/2000:13:55:36 +0300')
+            $this->parser->parseDate('10/Oct/2000:13:55:36 +0300')
         );
     }
 
@@ -179,15 +187,15 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             '1456433748',
-            parse_bookmark_date('1456433748')
+            $this->parser->parseDate('1456433748')
         );
         $this->assertEquals(
             '971175336',
-            parse_bookmark_date('971175336')
+            $this->parser->parseDate('971175336')
         );
         $this->assertEquals(
             '-371211336',
-            parse_bookmark_date('-371211336')
+            $this->parser->parseDate('-371211336')
         );
     }
 
@@ -196,7 +204,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testAddDefaultTag()
     {
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://no.tag">NoTag</A>'
         );
         $this->assertEquals(
@@ -210,9 +218,11 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testAddUserDefaultTag()
     {
-        $bkm = parse_netscape_bookmarks(
-            '<A HREF="http://no.tag">NoTag</A>',
-            'im port ed'
+        $default = 'im port ed';
+        $parser = new NetscapeBookmarkParser($default);
+
+        $bkm = $parser->parseString(
+            '<A HREF="http://no.tag">NoTag</A>'
         );
         $this->assertEquals(
             'im port ed',
@@ -225,7 +235,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParseEmptyTags()
     {
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://empty.tag" TAGS="">EmptyTag</A>'
         );
         $this->assertEquals(
@@ -239,7 +249,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParseSpaceTags()
     {
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://space.tag" TAGS="t1 t2">SpaceTag</A>'
         );
         $this->assertEquals(
@@ -247,7 +257,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
             $bkm[0]['tags']
         );
 
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://space.tag" TAGS="t_1 .t_2">SpaceTag</A>'
         );
         $this->assertEquals(
@@ -261,7 +271,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParseCommaTags()
     {
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://comma.tag" TAGS="t1,t2,t3">CommaTag</A>'
         );
         $this->assertEquals(
@@ -269,7 +279,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
             $bkm[0]['tags']
         );
 
-        $bkm = parse_netscape_bookmarks(
+        $bkm = $this->parser->parseString(
             '<A HREF="http://comma.tag" TAGS="t1,.t2,.t_3">CommaTag</A>'
         );
         $this->assertEquals(

@@ -7,14 +7,22 @@
  */
 class ParseShaarliBookmarksTest extends PHPUnit_Framework_TestCase
 {
+    protected $parser = null;
+
+    /**
+     * Initialize test resources
+     */
+    public function setUp()
+    {
+        $this->parser = new NetscapeBookmarkParser();
+    }
+
     /**
      * Parse bookmarks as exported by Shaarli - no plugin enabled
      */
     public function testParseNoPlugins()
     {
-        $bkm = parse_netscape_bookmarks(
-            file_get_contents('tests/input/shaarli.htm')
-        );
+        $bkm = $this->parser->parseFile('tests/input/shaarli.htm');
         $this->assertEquals(6, sizeof($bkm));
 
         $this->assertEquals('1', $bkm[0]['pub']);
@@ -102,9 +110,7 @@ class ParseShaarliBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParseMarkdown()
     {
-        $bkm = parse_netscape_bookmarks(
-            file_get_contents('tests/input/shaarli_markdown.htm')
-        );
+        $bkm = $this->parser->parseFile('tests/input/shaarli_markdown.htm');
         $this->assertEquals(3, sizeof($bkm));
 
         // Markdown code

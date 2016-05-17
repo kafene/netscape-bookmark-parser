@@ -12,9 +12,8 @@ class ParseDeliciousBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function testParse()
     {
-        $bkm = parse_netscape_bookmarks(
-            file_get_contents('tests/input/delicious.htm')
-        );
+        $parser = new NetscapeBookmarkParser();
+        $bkm = $parser->parseFile('tests/input/delicious.htm');
         $this->assertEquals(5, sizeof($bkm));
 
         $this->assertEquals(
