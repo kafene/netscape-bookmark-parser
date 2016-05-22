@@ -79,7 +79,10 @@ class NetscapeBookmarkParser
 
         foreach ($lines as $line_no => $line) {
             if (preg_match('/^<h\d+>(.*?)<\/h\d+>/i', $line, $m1)) {
-                // a header is matched: set its value as the current tag
+                // a header is matched:
+                // - links may be grouped in a (sub-)folder
+                // - set the header's content as the current tag
+                //   - child links: use this value if the tag list is empty
                 $currentTag = $m1[2];
                 continue;
 
