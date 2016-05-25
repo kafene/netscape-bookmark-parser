@@ -83,7 +83,7 @@ class NetscapeBookmarkParser
                 // - links may be grouped in a (sub-)folder
                 // - set the header's content as the current tag
                 //   - child links: use this value if the tag list is empty
-                $currentTag = $m1[2];
+                $currentTag = $m1[1];
                 continue;
 
             } elseif (preg_match('/^<\/DL>/i', $line)) {
