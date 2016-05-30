@@ -5,7 +5,8 @@
  */
 class NetscapeBookmarkParser
 {
-    protected $defaultTag;
+    protected $keepNestedTags;
+    protected $defaultTags;
     protected $defaultPub;
     protected $items;
 
@@ -15,17 +16,25 @@ class NetscapeBookmarkParser
     /**
      * Instantiates a new NetscapeBookmarkParser
      *
-     * @param string $defaultTag Link tag if missing
-     * @param mixed  $defaultPub Link publication status if missing
-     *                           - 'true' => public
-     *                           - 'false' => private)
+     * @param bool  $keepNestedTags Tag links with parent folder names
+     * @param array $defaultTags    Tag all links with these values
+     * @param mixed $defaultPub     Link publication status if missing
+     *                              - 'true' => public
+     *                              - 'false' => private)
      */
-    public function __construct($defaultTag=null, $defaultPub=false)
+    public function __construct(
+        $keepNestedTags=true,
+        $defaultTags=array(),
+        $defaultPub=false
+    )
     {
-        if ($defaultTag) {
-            $this->defaultTag = $defaultTag;
+        if ($keepNestedTags) {
+            $this->keepNestedTags = true;
+        }
+        if ($defaultTags) {
+            $this->defaultTags = $defaultTags;
         } else {
-            $this->defaultTag = 'imported-'.date("Ymd");
+            $this->defaultTags = array();
         }
         if ($defaultPub) {
             $this->defaultPub = $defaultPub;
@@ -73,7 +82,7 @@ class NetscapeBookmarkParser
     public function parseString($bookmarkString) {
         $i = 0;
         $next = false;
-        $currentTag = $this->defaultTag;
+        $folderTags = array();
 
         $lines = explode("\n", $this->sanitizeString($bookmarkString));
 
@@ -81,21 +90,17 @@ class NetscapeBookmarkParser
             if (preg_match('/^<h\d+>(.*?)<\/h\d+>/i', $line, $m1)) {
                 // a header is matched:
                 // - links may be grouped in a (sub-)folder
-                // - set the header's content as the current tag
-                //   - child links: use this value if the tag list is empty
-                $currentTag = $m1[1];
+                // - append the header's content to the folder tags
+                $folderTags[] = strtolower($m1[1]);
                 continue;
 
             } elseif (preg_match('/^<\/DL>/i', $line)) {
-                // <DL> matched: stop using header value
-                $currentTag = $this->defaultTag;
+                // </DL> matched: stop using header value
+                array_pop($folderTags);
+                continue;
             }
 
             if (preg_match('/<a/i', $line, $m2)) {
-                if ($currentTag) {
-                    $this->items[$i]['tags'] = $currentTag;
-                }
-
                 if (preg_match('/href="(.*?)"/i', $line, $m3)) {
                     $this->items[$i]['uri'] = $m3[1];
                 } else {
@@ -116,11 +121,21 @@ class NetscapeBookmarkParser
                     $this->items[$i]['note'] = '';
                 }
 
-                if (preg_match('/(tags?|labels?|folders?)="(.*?)"/i', $line, $m7)) {
-                    $this->items[$i]['tags'] = strtr($m7[2], ',', ' ');
-                } else {
-                    $this->items[$i]['tags'] = $currentTag;
+                $tags = array();
+                if ($this->defaultTags) {
+                    $tags = array_merge($tags, $this->defaultTags);
                 }
+                if ($this->keepNestedTags) {
+                    $tags = array_merge($tags, $folderTags);
+                }
+
+                if (preg_match('/(tags?|labels?|folders?)="(.*?)"/i', $line, $m7)) {
+                    $tags = array_merge(
+                        $tags,
+                        explode(' ', strtr($m7[2], ',', ' '))
+                    );
+                }
+                $this->items[$i]['tags'] = implode(' ', $tags);
 
                 if (preg_match('/add_date="(.*?)"/i', $line, $m8)) {
                     $this->items[$i]['time'] = $this->parseDate($m8[1]);
@@ -194,7 +209,10 @@ class NetscapeBookmarkParser
     /**
      * Sanitizes the content of a string containing Netscape bookmarks
      *
-     * This removes extra newlines, trailing spaces and tabs.
+     * This removes:
+     * - comment blocks
+     * - metadata: DOCTYPE, H1, META, TITLE
+     * - extra newlines, trailing spaces and tabs
      *
      * @param string $bookmarkString Original bookmark string
      *
