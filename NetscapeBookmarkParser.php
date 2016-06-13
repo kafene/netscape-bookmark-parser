@@ -113,7 +113,7 @@ class NetscapeBookmarkParser
 
                 if (preg_match('/note="(.*?)"<\/a>/i', $line, $m5)) {
                     $this->items[$i]['note'] = $m5[1];
-                } elseif (preg_match('/<dd>(.*?)<\//i', $line, $m6)) {
+                } elseif (preg_match('/<dd>(.*?)$/i', $line, $m6)) {
                     $this->items[$i]['note'] = str_replace('<br>', "\n", $m6[1]);
                 } else {
                     $this->items[$i]['note'] = '';
@@ -221,21 +221,36 @@ class NetscapeBookmarkParser
     public static function sanitizeString($bookmarkString)
     {
         $sanitized = $bookmarkString;
+
+        // trim comments
+        $sanitized = preg_replace('@<!--.*-->@mis', '', $sanitized);
+
+        // trim unused metadata
+        $sanitized = preg_replace('@(<!DOCTYPE|<META|<TITLE|<H1|<P).*\n@i', '', $sanitized);
+
+        // trim whitespace
+        $sanitized = trim($sanitized);
+
+        // trim carriage returns, replace tabs by a single space
         $sanitized = str_replace(array("\r", "\t"), array('',' '), $sanitized);
 
+        // convert multiline descriptions to one-line descriptions
+        // line feeds are converted to <br>
         $sanitized = preg_replace_callback(
-            '@<DD>(.*?)(<A|<\/|<DL|<DT|<P)@mis',
+            '@<DD>(.*?)<@mis',
             function($match) {
-                return '<DD>'.str_replace("\n", '<br>', trim($match[1])).'</';
+                return '<DD>'.str_replace("\n", '<br>', trim($match[1])).PHP_EOL.'<';
             },
             $sanitized
         );
 
+        // keep one XML element per line to prepare for linear parsing
         $sanitized = preg_replace('@>(\s*?)<@mis', ">\n<", $sanitized);
-        $sanitized = preg_replace('@<br>\n<br>@mis', "<br><br>", $sanitized);
-        $sanitized = preg_replace('@(<!DOCTYPE|<META|<!--|<TITLE|<H1|<P)(.*?)\n@i', '', $sanitized);
-        $sanitized = trim($sanitized);
-        $sanitized = preg_replace('@\n<dd@i', '<dd', $sanitized);
+
+        // concatenate all information related to the same entry on the same line
+        // e.g. <A HREF="...">My Link</A><DD>List<br>- item1<br>- item2
+        $sanitized = preg_replace('@\n<br>@mis', "<br>", $sanitized);
+        $sanitized = preg_replace('@\n<DD@i', '<DD', $sanitized);
 
         return $sanitized;
     }
