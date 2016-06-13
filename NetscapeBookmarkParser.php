@@ -85,7 +85,7 @@ class NetscapeBookmarkParser
         $lines = explode("\n", $this->sanitizeString($bookmarkString));
 
         foreach ($lines as $line_no => $line) {
-            if (preg_match('/^<h\d+>(.*?)<\/h\d+>/i', $line, $m1)) {
+            if (preg_match('/^<h\d.*>(.*)<\/h\d>/i', $line, $m1)) {
                 // a header is matched:
                 // - links may be grouped in a (sub-)folder
                 // - append the header's content to the folder tags
