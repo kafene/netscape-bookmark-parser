@@ -19,13 +19,13 @@ class NetscapeBookmarkParser
      * @param bool  $keepNestedTags Tag links with parent folder names
      * @param array $defaultTags    Tag all links with these values
      * @param mixed $defaultPub     Link publication status if missing
-     *                              - 'true' => public
-     *                              - 'false' => private)
+     *                              - '1' => public
+     *                              - '0' => private)
      */
     public function __construct(
         $keepNestedTags=true,
         $defaultTags=array(),
-        $defaultPub=false
+        $defaultPub='0'
     )
     {
         if ($keepNestedTags) {
@@ -36,9 +36,7 @@ class NetscapeBookmarkParser
         } else {
             $this->defaultTags = array();
         }
-        if ($defaultPub) {
-            $this->defaultPub = $defaultPub;
-        }
+        $this->defaultPub = $defaultPub;
     }
 
     /**
@@ -147,6 +145,8 @@ class NetscapeBookmarkParser
                     $this->items[$i]['pub'] = $this->parseBoolean($m9[2], false) ? 1 : 0;
                 } elseif (preg_match('/(private|shared)="(.*?)"/i', $line, $m10)) {
                     $this->items[$i]['pub'] = $this->parseBoolean($m10[2], true) ? 0 : 1;
+                } else {
+                    $this->items[$i]['pub'] = $this->defaultPub;
                 }
 
                 $i++;
