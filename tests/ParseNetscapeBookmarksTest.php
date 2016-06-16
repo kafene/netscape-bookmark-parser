@@ -15,7 +15,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->parser = new NetscapeBookmarkParser(null, 'error');
+        $this->parser = new NetscapeBookmarkParser(true, array(), 'error');
     }
 
     /**
@@ -72,6 +72,47 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
            .PHP_EOL.'Paragraph'.PHP_EOL.'number'.PHP_EOL.'two.',
             $bkm[2]['note']
         );
+    }
+
+    /**
+     * Parse bookmarks nested in folders
+     */
+    public function testParseNested()
+    {
+        $bkm = $this->parser->parseFile('tests/input/netscape_nested.htm');
+        $this->assertEquals(8, sizeof($bkm));
+
+        $this->assertEquals('tag1 tag2', $bkm[0]['tags']);
+        $this->assertEquals('1456433741', $bkm[0]['time']);
+        $this->assertEquals('Nested 1', $bkm[0]['title']);
+
+        $this->assertEquals('folder1 tag1 tag2', $bkm[1]['tags']);
+        $this->assertEquals('1456433742', $bkm[1]['time']);
+        $this->assertEquals('Nested 1-1', $bkm[1]['title']);
+
+        $this->assertEquals('folder1 tag3 tag4', $bkm[2]['tags']);
+        $this->assertEquals('1456433747', $bkm[2]['time']);
+        $this->assertEquals('Nested 1-2', $bkm[2]['title']);
+
+        $this->assertEquals('folder2', $bkm[3]['tags']);
+        $this->assertEquals('1454433742', $bkm[3]['time']);
+        $this->assertEquals('Nested 2-1', $bkm[3]['title']);
+
+        $this->assertEquals('folder2', $bkm[4]['tags']);
+        $this->assertEquals('1453233747', $bkm[4]['time']);
+        $this->assertEquals('Nested 2-2', $bkm[4]['title']);
+
+        $this->assertEquals('folder3 folder3-1 tag3', $bkm[5]['tags']);
+        $this->assertEquals('1454433742', $bkm[5]['time']);
+        $this->assertEquals('Nested 3-1', $bkm[5]['title']);
+
+        $this->assertEquals('folder3 folder3-1', $bkm[6]['tags']);
+        $this->assertEquals('1453233747', $bkm[6]['time']);
+        $this->assertEquals('Nested 3-2', $bkm[6]['title']);
+
+        $this->assertEquals('tag4', $bkm[7]['tags']);
+        $this->assertEquals('1456733741', $bkm[7]['time']);
+        $this->assertEquals('Nested 2', $bkm[7]['title']);
     }
 
     /**
@@ -137,7 +178,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     function testParseBooleanAttributesDefault()
     {
         $default = 'def';
-        $parser = new NetscapeBookmarkParser(null, $default);
+        $parser = new NetscapeBookmarkParser(false, array(), $default);
 
         $this->assertEquals(
             $default,
@@ -200,17 +241,14 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * Use a default tag if none is found
+     * Leave links with no/empty tag as-is
      */
-    public function testAddDefaultTag()
+    public function testEmptyDefaultTag()
     {
         $bkm = $this->parser->parseString(
             '<A HREF="http://no.tag">NoTag</A>'
         );
-        $this->assertEquals(
-            'imported-'.date('Ymd'),
-            $bkm[0]['tags']
-        );
+        $this->assertEquals('', $bkm[0]['tags']);
     }
 
     /**
@@ -219,7 +257,7 @@ class ParseNetscapeBookmarksTest extends PHPUnit_Framework_TestCase
     public function testAddUserDefaultTag()
     {
         $default = 'im port ed';
-        $parser = new NetscapeBookmarkParser($default);
+        $parser = new NetscapeBookmarkParser(false, array($default));
 
         $bkm = $parser->parseString(
             '<A HREF="http://no.tag">NoTag</A>'

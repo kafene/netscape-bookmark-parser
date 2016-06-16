@@ -5,7 +5,8 @@
  */
 class NetscapeBookmarkParser
 {
-    protected $defaultTag;
+    protected $keepNestedTags;
+    protected $defaultTags;
     protected $defaultPub;
     protected $items;
 
@@ -15,21 +16,27 @@ class NetscapeBookmarkParser
     /**
      * Instantiates a new NetscapeBookmarkParser
      *
-     * @param string $defaultTag Link tag if missing
-     * @param mixed  $defaultPub Link publication status if missing
-     *                           - 'true' => public
-     *                           - 'false' => private)
+     * @param bool  $keepNestedTags Tag links with parent folder names
+     * @param array $defaultTags    Tag all links with these values
+     * @param mixed $defaultPub     Link publication status if missing
+     *                              - '1' => public
+     *                              - '0' => private)
      */
-    public function __construct($defaultTag=null, $defaultPub=false)
+    public function __construct(
+        $keepNestedTags=true,
+        $defaultTags=array(),
+        $defaultPub='0'
+    )
     {
-        if ($defaultTag) {
-            $this->defaultTag = $defaultTag;
+        if ($keepNestedTags) {
+            $this->keepNestedTags = true;
+        }
+        if ($defaultTags) {
+            $this->defaultTags = $defaultTags;
         } else {
-            $this->defaultTag = 'imported-'.date("Ymd");
+            $this->defaultTags = array();
         }
-        if ($defaultPub) {
-            $this->defaultPub = $defaultPub;
-        }
+        $this->defaultPub = $defaultPub;
     }
 
     /**
@@ -73,26 +80,25 @@ class NetscapeBookmarkParser
     public function parseString($bookmarkString) {
         $i = 0;
         $next = false;
-        $currentTag = $this->defaultTag;
+        $folderTags = array();
 
         $lines = explode("\n", $this->sanitizeString($bookmarkString));
 
         foreach ($lines as $line_no => $line) {
-            if (preg_match('/^<h\d+>(.*?)<\/h\d+>/i', $line, $m1)) {
-                // a header is matched: set its value as the current tag
-                $currentTag = $m1[2];
+            if (preg_match('/^<h\d.*>(.*)<\/h\d>/i', $line, $m1)) {
+                // a header is matched:
+                // - links may be grouped in a (sub-)folder
+                // - append the header's content to the folder tags
+                $folderTags[] = strtolower($m1[1]);
                 continue;
 
             } elseif (preg_match('/^<\/DL>/i', $line)) {
-                // <DL> matched: stop using header value
-                $currentTag = $this->defaultTag;
+                // </DL> matched: stop using header value
+                array_pop($folderTags);
+                continue;
             }
 
             if (preg_match('/<a/i', $line, $m2)) {
-                if ($currentTag) {
-                    $this->items[$i]['tags'] = $currentTag;
-                }
-
                 if (preg_match('/href="(.*?)"/i', $line, $m3)) {
                     $this->items[$i]['uri'] = $m3[1];
                 } else {
@@ -107,17 +113,27 @@ class NetscapeBookmarkParser
 
                 if (preg_match('/note="(.*?)"<\/a>/i', $line, $m5)) {
                     $this->items[$i]['note'] = $m5[1];
-                } elseif (preg_match('/<dd>(.*?)<\//i', $line, $m6)) {
+                } elseif (preg_match('/<dd>(.*?)$/i', $line, $m6)) {
                     $this->items[$i]['note'] = str_replace('<br>', "\n", $m6[1]);
                 } else {
                     $this->items[$i]['note'] = '';
                 }
 
-                if (preg_match('/(tags?|labels?|folders?)="(.*?)"/i', $line, $m7)) {
-                    $this->items[$i]['tags'] = strtr($m7[2], ',', ' ');
-                } else {
-                    $this->items[$i]['tags'] = $currentTag;
+                $tags = array();
+                if ($this->defaultTags) {
+                    $tags = array_merge($tags, $this->defaultTags);
                 }
+                if ($this->keepNestedTags) {
+                    $tags = array_merge($tags, $folderTags);
+                }
+
+                if (preg_match('/(tags?|labels?|folders?)="(.*?)"/i', $line, $m7)) {
+                    $tags = array_merge(
+                        $tags,
+                        explode(' ', strtr($m7[2], ',', ' '))
+                    );
+                }
+                $this->items[$i]['tags'] = implode(' ', $tags);
 
                 if (preg_match('/add_date="(.*?)"/i', $line, $m8)) {
                     $this->items[$i]['time'] = $this->parseDate($m8[1]);
@@ -129,6 +145,8 @@ class NetscapeBookmarkParser
                     $this->items[$i]['pub'] = $this->parseBoolean($m9[2], false) ? 1 : 0;
                 } elseif (preg_match('/(private|shared)="(.*?)"/i', $line, $m10)) {
                     $this->items[$i]['pub'] = $this->parseBoolean($m10[2], true) ? 0 : 1;
+                } else {
+                    $this->items[$i]['pub'] = $this->defaultPub;
                 }
 
                 $i++;
@@ -191,7 +209,10 @@ class NetscapeBookmarkParser
     /**
      * Sanitizes the content of a string containing Netscape bookmarks
      *
-     * This removes extra newlines, trailing spaces and tabs.
+     * This removes:
+     * - comment blocks
+     * - metadata: DOCTYPE, H1, META, TITLE
+     * - extra newlines, trailing spaces and tabs
      *
      * @param string $bookmarkString Original bookmark string
      *
@@ -200,21 +221,36 @@ class NetscapeBookmarkParser
     public static function sanitizeString($bookmarkString)
     {
         $sanitized = $bookmarkString;
+
+        // trim comments
+        $sanitized = preg_replace('@<!--.*-->@mis', '', $sanitized);
+
+        // trim unused metadata
+        $sanitized = preg_replace('@(<!DOCTYPE|<META|<TITLE|<H1|<P).*\n@i', '', $sanitized);
+
+        // trim whitespace
+        $sanitized = trim($sanitized);
+
+        // trim carriage returns, replace tabs by a single space
         $sanitized = str_replace(array("\r", "\t"), array('',' '), $sanitized);
 
+        // convert multiline descriptions to one-line descriptions
+        // line feeds are converted to <br>
         $sanitized = preg_replace_callback(
-            '@<DD>(.*?)(<A|<\/|<DL|<DT|<P)@mis',
+            '@<DD>(.*?)<@mis',
             function($match) {
-                return '<DD>'.str_replace("\n", '<br>', trim($match[1])).'</';
+                return '<DD>'.str_replace("\n", '<br>', trim($match[1])).PHP_EOL.'<';
             },
             $sanitized
         );
 
+        // keep one XML element per line to prepare for linear parsing
         $sanitized = preg_replace('@>(\s*?)<@mis', ">\n<", $sanitized);
-        $sanitized = preg_replace('@<br>\n<br>@mis', "<br><br>", $sanitized);
-        $sanitized = preg_replace('@(<!DOCTYPE|<META|<!--|<TITLE|<H1|<P)(.*?)\n@i', '', $sanitized);
-        $sanitized = trim($sanitized);
-        $sanitized = preg_replace('@\n<dd@i', '<dd', $sanitized);
+
+        // concatenate all information related to the same entry on the same line
+        // e.g. <A HREF="...">My Link</A><DD>List<br>- item1<br>- item2
+        $sanitized = preg_replace('@\n<br>@mis', "<br>", $sanitized);
+        $sanitized = preg_replace('@\n<DD@i', '<DD', $sanitized);
 
         return $sanitized;
     }
