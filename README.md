@@ -1,6 +1,7 @@
 # netscape-bookmark-parser
 [![license](https://img.shields.io/github/license/kafene/netscape-bookmark-parser.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
+[![](https://img.shields.io/packagist/v/kafene/netscape-bookmark-parser.svg?style=plastic)](https://packagist.org/packages/kafene/netscape-bookmark-parser)
 
 ## About
 This library provides a generic `NetscapeBookmarkParser` class that is able
